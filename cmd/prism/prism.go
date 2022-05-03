@@ -19,6 +19,7 @@ var CLI struct {
 	File     string `arg:"" type:"existingfile" help:"File with code"`
 	Language string `name:"lang" short:"l" help:"Language to parse." required:""`
 	Output   string `name:"output" short:"o" help:"output image" type:"path"`
+	Numbers  bool   `short:"n" help:"display line numbers"`
 
 	Debug bool `help:"Debug logging"`
 }
@@ -50,26 +51,26 @@ func run(ctx *kong.Context) error {
 
 	log.Debug().Msg("Language set")
 
-	err := pr.SetFontFace("FiraCode-Regular.ttf", 46)
-	if err != nil {
-		return err
-	}
-	log.Debug().Msg("Font loaded")
-
 	code, err := ioutil.ReadFile(CLI.File)
 	if err != nil {
 		return err
 	}
 	log.Debug().Msg("Code loaded")
 
+	options := prism.Options{}
+
+	if CLI.Numbers {
+		options.LineNumbers = true
+	}
+
 	if CLI.Output != "" {
-		err := pr.SavePNG(string(code), CLI.Output)
+		err := pr.SavePNG(string(code), CLI.Output, options)
 		if err != nil {
 			return err
 		}
 		log.Info().Str("Output", CLI.Output).Msg("Image saved!")
 	} else {
-		err := pr.SavePNG(string(code), "prism.png")
+		err := pr.SavePNG(string(code), "prism.png", options)
 		if err != nil {
 			return err
 		}
