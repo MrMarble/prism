@@ -1,0 +1,5 @@
+.vscode
+*.png
+coverage.txt
+/*.ttf
+.task
