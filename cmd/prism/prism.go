@@ -23,17 +23,17 @@ var (
 var CLI struct {
 	File     string      `arg:"" type:"existingfile" help:"File with code"`
 	Language string      `name:"lang" short:"l" help:"Language to parse." required:""`
-	Output   string      `name:"output" short:"o" help:"output image" type:"path" default:"prism.png"`
+	Output   string      `name:"output" short:"o" help:"Output file name" type:"path" default:"prism.png"`
 	Version  VersionFlag `name:"version" help:"Print version information and quit"`
 
-	Numbers bool `short:"n" help:"display line numbers"`
-	Header  bool `help:"display header"`
+	Numbers bool `short:"n" help:"Display line numbers"`
+	Header  bool `help:"Display header"`
 }
 
 func (v VersionFlag) Decode(ctx *kong.DecodeContext) error { return nil }
 func (v VersionFlag) IsBool() bool                         { return true }
 func (v VersionFlag) BeforeApply(app *kong.Kong) error {
-	fmt.Printf("prism has version %s built from %s on %s\n", version, commit, date)
+	fmt.Printf("Prism has version %s built from %s on %s\n", version, commit, date)
 	app.Exit(0)
 
 	return nil
