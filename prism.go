@@ -31,6 +31,7 @@ type Context struct {
 
 type Options struct {
 	LineNumbers bool
+	Header      bool
 }
 
 //go:embed fonts/FiraCode-Regular.ttf
@@ -78,14 +79,20 @@ func (ctx *Context) calculate(code string, options Options) (width, height int, 
 		horizontalMargin += ctx.measureString(fmt.Sprint(ctx.lines)) + (horizontalMargin / 2)
 	}
 
-	return int(codeWidth) + ctx.margin*2, int(codeHeight + verticalMargin*2), horizontalMargin, verticalMargin
+	if options.Header {
+		verticalMargin += 70
+	}
+
+	width = int(codeWidth) + ctx.margin + int(horizontalMargin)
+	height = int(codeHeight) + ctx.margin + int(verticalMargin)
+	return width, height, horizontalMargin, verticalMargin
 }
 
 func (ctx *Context) parse(code string, options Options) *gg.Context {
 	code = removeAccents(code)
 	ctx.lines = strings.Count(code, "\n")
 
-	width, height, hMargin, _ := ctx.calculate(code, options)
+	width, height, hMargin, vMargin := ctx.calculate(code, options)
 
 	// gg
 	dc := gg.NewContext(width, height)
@@ -99,11 +106,20 @@ func (ctx *Context) parse(code string, options Options) *gg.Context {
 	// font
 	dc.SetFontFace(ctx.font)
 
+	if options.Header {
+		colors := [3]string{"#ff5f58", "#ffbd2e", "#18c132"}
+		for i, color := range colors {
+			dc.DrawCircle(float64(ctx.margin*(i+1)), float64(ctx.margin), 15)
+			dc.SetHexColor(color)
+			dc.Fill()
+		}
+	}
+
 	if options.LineNumbers {
 		pad := int(math.Log10(float64(ctx.lines)) + 1)
 		for i := 0; i < ctx.lines; i++ {
 			dc.SetHexColor(ctx.theme[tokenizer.COMMENT])
-			dc.DrawString(fmt.Sprintf("%*d", pad, i+1), float64(ctx.margin), float64(ctx.margin)+ctx.points+((ctx.points*ctx.lineSpacing)*float64(i)))
+			dc.DrawString(fmt.Sprintf("%*d", pad, i+1), float64(ctx.margin), vMargin+ctx.points+((ctx.points*ctx.lineSpacing)*float64(i)))
 		}
 	}
 
@@ -114,8 +130,8 @@ func (ctx *Context) parse(code string, options Options) *gg.Context {
 	for _, token := range tokens {
 		color := ctx.theme.GetColor(token)
 		dc.SetHexColor(color)
-		x := float64(hMargin) + float64(token.Col)*runeWidth
-		y := float64(ctx.margin) + ctx.points + ((ctx.points * ctx.lineSpacing) * float64(token.Line))
+		x := hMargin + float64(token.Col)*runeWidth
+		y := vMargin + ctx.points + ((ctx.points * ctx.lineSpacing) * float64(token.Line))
 		dc.DrawString(token.Content, x, y)
 	}
 	return dc

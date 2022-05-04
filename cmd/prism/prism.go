@@ -19,7 +19,9 @@ var CLI struct {
 	File     string `arg:"" type:"existingfile" help:"File with code"`
 	Language string `name:"lang" short:"l" help:"Language to parse." required:""`
 	Output   string `name:"output" short:"o" help:"output image" type:"path"`
-	Numbers  bool   `short:"n" help:"display line numbers"`
+
+	Numbers bool `short:"n" help:"display line numbers"`
+	Header  bool `help:"display header"`
 
 	Debug bool `help:"Debug logging"`
 }
@@ -62,7 +64,9 @@ func run(ctx *kong.Context) error {
 	if CLI.Numbers {
 		options.LineNumbers = true
 	}
-
+	if CLI.Header {
+		options.Header = true
+	}
 	if CLI.Output != "" {
 		err := pr.SavePNG(string(code), CLI.Output, options)
 		if err != nil {
