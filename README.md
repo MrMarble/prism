@@ -4,9 +4,10 @@
 ![GitHub](https://img.shields.io/github/license/mrmarble/prism)
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/mrmarble/prism)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/mrmarble/prism)
+[![Go Report Card](https://goreportcard.com/badge/github.com/mrmarble/prism)](https://goreportcard.com/report/github.com/mrmarble/prism)
 [![Go Reference](https://pkg.go.dev/badge/github.com/mrmarble/prism.svg)](https://pkg.go.dev/github.com/mrmarble/prism)
 
-### Create beautiful images of your source code directly from your terminal.
+Create beautiful images of your source code directly from your terminal.
 
 ![example](assets/example.png)
 

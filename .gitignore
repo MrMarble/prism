@@ -1,5 +1,5 @@
 /.vscode
-*.png
+/*.png
 /coverage.txt
 /*.ttf
 /.task
