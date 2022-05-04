@@ -1,5 +1,8 @@
-.vscode
+/.vscode
 *.png
-coverage.txt
+/coverage.txt
 /*.ttf
-.task
+/.task
+/dist
+/prism
+/!prism.go

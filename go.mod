@@ -19,7 +19,6 @@ require (
 require (
 	github.com/alecthomas/kong v0.5.0
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
-	github.com/rs/zerolog v1.26.1
 	github.com/stretchr/testify v1.7.1
 	golang.org/x/exp v0.0.0-20220428152302-39d4317da171
 	golang.org/x/image v0.0.0-20220413100746-70e8d0d3baa9
