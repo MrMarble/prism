@@ -30,20 +30,26 @@ const (
 )
 
 func Tokenize(code string, language Language) []Token {
-	lines := strings.Split(code, "\n")
 	var tokens []Token
+
+	lines := strings.Split(code, "\n")
+
 	for lineNumber, line := range lines {
 		stream := Stream{str: line}
+
 		for {
 			if stream.Eol() {
 				break
 			}
+
 			token := language.Token(&stream)
 			if token != "" {
 				tokens = append(tokens, Token{Kind: token, Content: stream.Current(), Line: lineNumber, Col: stream.start})
 			}
+
 			stream.start = stream.pos
 		}
 	}
+
 	return tokens
 }

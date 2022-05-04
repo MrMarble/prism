@@ -17,17 +17,21 @@ func (b *Brainfuck) Token(stream *tokenizer.Stream) tokenizer.Kind {
 	if stream.EatSpace() {
 		return ""
 	}
+
 	if stream.Sol() {
 		b.commentLine = false
 	}
+
 	ch := stream.Next()
-	if strings.Contains("><+-.,[]", ch) {
+	if strings.Contains("><+-.,[]", ch) { //nolint
 		if b.commentLine {
 			if stream.Eol() {
 				b.commentLine = false
 			}
+
 			return tokenizer.COMMENT
 		}
+
 		switch ch {
 		case "]":
 			b.left++
@@ -53,5 +57,6 @@ func (b *Brainfuck) Token(stream *tokenizer.Stream) tokenizer.Kind {
 	if stream.Eol() {
 		b.commentLine = false
 	}
+
 	return ""
 }

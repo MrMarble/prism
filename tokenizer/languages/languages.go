@@ -13,6 +13,7 @@ func Get(name string) (lang tokenizer.Language, ok bool) {
 	if language, ok := languages[name]; ok {
 		return language(), ok
 	}
+
 	return nil, false
 }
 
@@ -25,5 +26,6 @@ func List() []string {
 	for k := range languages {
 		keys = append(keys, k)
 	}
+
 	return keys
 }

@@ -21,8 +21,10 @@ func BenchmarkEncodePNG(b *testing.B) {
 	ctx := prism.NewContext()
 	lang, _ := languages.Get("golang")
 	ctx.SetLanguage(lang)
+
 	for i := 0; i < b.N; i++ {
 		var buf bytes.Buffer
+
 		err := ctx.EncodePNG(code, &buf, prism.Options{})
 		if err != nil {
 			b.Fatal()
