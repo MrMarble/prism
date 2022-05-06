@@ -4,7 +4,6 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
-	"math"
 	"strings"
 
 	"github.com/fogleman/gg"
@@ -25,13 +24,6 @@ type Context struct {
 	font        font.Face
 	theme       themer.Theme
 	lang        tokenizer.Language
-}
-
-type Options struct {
-	LineNumbers bool
-	Header      bool
-	Relative    bool
-	Range       Range
 }
 
 //go:embed fonts/FiraCode-Regular.ttf
@@ -94,7 +86,7 @@ func (ctx *Context) calculateSize(code string, options Options) {
 }
 
 func (ctx *Context) calculateLines(code string, options Options) string {
-	ctx.lines = strings.Count(code, "\n")
+	ctx.lines = strings.Count(code, "\n") + 1
 
 	if (Range{}) != options.Range {
 		var err error
@@ -112,37 +104,6 @@ func (ctx *Context) calculateLines(code string, options Options) string {
 	}
 
 	return code
-}
-
-func (ctx *Context) setOptions(dc *gg.Context, options Options) {
-	if options.Header {
-		radius := 15.0
-
-		colors := [3]string{"#ff5f58", "#ffbd2e", "#18c132"}
-		for i, color := range colors {
-			dc.DrawCircle(float64(ctx.margin*(i+1)), float64(ctx.margin), radius)
-			dc.SetHexColor(color)
-			dc.Fill()
-		}
-	}
-
-	if options.LineNumbers {
-		pad := int(math.Log10(float64(ctx.lines)) + 1)
-
-		for i := 0; i < ctx.lines; i++ {
-			dc.SetHexColor(ctx.theme[tokenizer.COMMENT])
-
-			x := float64(ctx.margin)
-			y := ctx.vMargin + ctx.points + ((ctx.points * ctx.lineSpacing) * float64(i))
-			lineNumber := i + 1
-
-			if options.Relative {
-				lineNumber = i + options.Range.Start
-			}
-
-			dc.DrawString(fmt.Sprintf("%*d", pad, lineNumber), x, y)
-		}
-	}
 }
 
 func (ctx *Context) parse(code string, options Options) *gg.Context {
@@ -163,7 +124,7 @@ func (ctx *Context) parse(code string, options Options) *gg.Context {
 	// font
 	dc.SetFontFace(ctx.font)
 
-	ctx.setOptions(dc, options)
+	options.Apply(dc, ctx)
 
 	// tokens
 	tokens := tokenizer.Tokenize(code, ctx.lang)
