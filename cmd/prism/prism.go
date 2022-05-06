@@ -26,8 +26,10 @@ var CLI struct {
 	Output   string      `name:"output" short:"o" help:"Output file name" type:"path" default:"prism.png"`
 	Version  VersionFlag `name:"version" help:"Print version information and quit"`
 
-	Numbers bool `short:"n" help:"Display line numbers"`
-	Header  bool `help:"Display header"`
+	Header   bool   `help:"Display header"`
+	Lines    string `help:"Specify a range of lines instead of reading the whole file. Ex: 10-20"`
+	Numbers  bool   `short:"n" help:"Display line numbers"`
+	Relative bool   `short:"r" help:"Use relative numbers. Needs --lines and --numbers"`
 }
 
 func (v VersionFlag) Decode(ctx *kong.DecodeContext) error { return nil }
@@ -75,6 +77,21 @@ func run(ctx *kong.Context) error {
 
 	if CLI.Header {
 		options.Header = true
+	}
+
+	if CLI.Lines != "" {
+		r := prism.Range{}
+
+		err = r.Parse(CLI.Lines)
+		if err != nil {
+			return err
+		}
+
+		options.Range = r
+	}
+
+	if CLI.Relative {
+		options.Relative = true
 	}
 
 	err = pr.SavePNG(string(code), CLI.Output, options)

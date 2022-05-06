@@ -4,25 +4,23 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math"
 	"strings"
-	"unicode"
 
 	"github.com/fogleman/gg"
-	"github.com/golang/freetype/truetype"
 	"github.com/mrmarble/prism/themer"
 	"github.com/mrmarble/prism/tokenizer"
 	"golang.org/x/image/font"
-	"golang.org/x/text/runes"
-	"golang.org/x/text/transform"
-	"golang.org/x/text/unicode/norm"
 )
 
 type Context struct {
 	points      float64
 	lineSpacing float64
 	margin      int
+	vMargin     float64
+	hMargin     float64
+	width       int
+	height      int
 	lines       int
 	font        font.Face
 	theme       themer.Theme
@@ -32,6 +30,8 @@ type Context struct {
 type Options struct {
 	LineNumbers bool
 	Header      bool
+	Relative    bool
+	Range       Range
 }
 
 //go:embed fonts/FiraCode-Regular.ttf
@@ -76,43 +76,45 @@ func (ctx *Context) SavePNG(code string, output string, options Options) error {
 	return dc.SavePNG(output)
 }
 
-func (ctx *Context) calculate(code string, options Options) (width, height int, hMargin, vMargin float64) {
+func (ctx *Context) calculateSize(code string, options Options) {
 	codeWidth, codeHeight := ctx.measureMultilineString(code)
-	hMargin = float64(ctx.margin)
-	vMargin = hMargin
+	ctx.hMargin = float64(ctx.margin)
+	ctx.vMargin = ctx.hMargin
 
 	if options.LineNumbers {
-		hMargin += ctx.measureString(fmt.Sprint(ctx.lines)) + (hMargin / 2) //nolint
+		ctx.hMargin += ctx.measureString(fmt.Sprint(ctx.lines)) + (ctx.hMargin / 2) //nolint
 	}
 
 	if options.Header {
-		vMargin += 70
+		ctx.vMargin += 70
 	}
 
-	width = int(codeWidth) + ctx.margin + int(hMargin)
-	height = int(codeHeight) + ctx.margin + int(vMargin)
-
-	return width, height, hMargin, vMargin
+	ctx.width = int(codeWidth) + ctx.margin + int(ctx.hMargin)
+	ctx.height = int(codeHeight) + ctx.margin + int(ctx.vMargin)
 }
 
-func (ctx *Context) parse(code string, options Options) *gg.Context {
-	code = removeAccents(code)
+func (ctx *Context) calculateLines(code string, options Options) string {
 	ctx.lines = strings.Count(code, "\n")
 
-	width, height, hMargin, vMargin := ctx.calculate(code, options)
+	if (Range{}) != options.Range {
+		var err error
 
-	// gg
-	dc := gg.NewContext(width, height)
+		code, err = substr(code, options.Range)
+		if err != nil {
+			panic(err)
+		}
 
-	// background
-	dc.SetHexColor(ctx.theme["body"])
-	dc.Clear()
-	// base color
-	dc.SetHexColor(ctx.theme[tokenizer.COMMENT])
+		if options.Relative {
+			ctx.lines = 1 + options.Range.End + -options.Range.Start
+		} else {
+			ctx.lines = strings.Count(code, "\n") + 1
+		}
+	}
 
-	// font
-	dc.SetFontFace(ctx.font)
+	return code
+}
 
+func (ctx *Context) setOptions(dc *gg.Context, options Options) {
 	if options.Header {
 		radius := 15.0
 
@@ -131,10 +133,37 @@ func (ctx *Context) parse(code string, options Options) *gg.Context {
 			dc.SetHexColor(ctx.theme[tokenizer.COMMENT])
 
 			x := float64(ctx.margin)
-			y := vMargin + ctx.points + ((ctx.points * ctx.lineSpacing) * float64(i))
-			dc.DrawString(fmt.Sprintf("%*d", pad, i+1), x, y)
+			y := ctx.vMargin + ctx.points + ((ctx.points * ctx.lineSpacing) * float64(i))
+			lineNumber := i + 1
+
+			if options.Relative {
+				lineNumber = i + options.Range.Start
+			}
+
+			dc.DrawString(fmt.Sprintf("%*d", pad, lineNumber), x, y)
 		}
 	}
+}
+
+func (ctx *Context) parse(code string, options Options) *gg.Context {
+	code = removeAccents(code)
+
+	code = ctx.calculateLines(code, options)
+	ctx.calculateSize(code, options)
+
+	// gg
+	dc := gg.NewContext(ctx.width, ctx.height)
+
+	// background
+	dc.SetHexColor(ctx.theme["body"])
+	dc.Clear()
+	// base color
+	dc.SetHexColor(ctx.theme[tokenizer.COMMENT])
+
+	// font
+	dc.SetFontFace(ctx.font)
+
+	ctx.setOptions(dc, options)
 
 	// tokens
 	tokens := tokenizer.Tokenize(code, ctx.lang)
@@ -145,8 +174,8 @@ func (ctx *Context) parse(code string, options Options) *gg.Context {
 		color := ctx.theme.GetColor(token)
 		dc.SetHexColor(color)
 
-		x := hMargin + float64(token.Col)*runeWidth
-		y := vMargin + ctx.points + ((ctx.points * ctx.lineSpacing) * float64(token.Line))
+		x := ctx.hMargin + float64(token.Col)*runeWidth
+		y := ctx.vMargin + ctx.points + ((ctx.points * ctx.lineSpacing) * float64(token.Line))
 
 		dc.DrawString(token.Content, x, y)
 	}
@@ -187,38 +216,4 @@ func (ctx *Context) measureString(s string) float64 {
 	a := d.MeasureString(s)
 
 	return float64(a >> 6) //nolint
-}
-
-func removeAccents(s string) string {
-	t := transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn)), norm.NFC)
-	output, _, e := transform.String(t, s)
-
-	if e != nil {
-		panic(e)
-	}
-
-	return output
-}
-
-func loadFontFace(path string, points float64) (font.Face, error) {
-	fontBytes, err := ioutil.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-
-	return parseFontFace(fontBytes, points)
-}
-
-func parseFontFace(fontBytes []byte, points float64) (font.Face, error) {
-	f, err := truetype.Parse(fontBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	face := truetype.NewFace(f, &truetype.Options{
-		Size: points,
-		// Hinting: font.HintingFull,
-	})
-
-	return face, nil
 }
