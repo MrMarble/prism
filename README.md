@@ -29,10 +29,12 @@ Usage of **prism**: prism [input file] [args...] Run prism without arguments to 
 Flags:
   -h, --help                  Show context-sensitive help.
   -l, --lang=STRING           Language to parse.
-  -o, --output="prism.png"    output image
+  -o, --output="prism.png"    Output file name
       --version               Print version information and quit
-  -n, --numbers               display line numbers
-      --header                display header
+      --header                Display header
+      --lines=STRING          Specify a range of lines instead of reading the whole file. Ex: 10-20
+  -n, --numbers               Display line numbers
+  -r, --relative              Use relative numbers. Needs --lines and --numbers
 ```
 
 ## Supported languages
