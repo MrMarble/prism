@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/aymerick/douceur v0.2.0
 	github.com/fogleman/gg v1.3.0
-	golang.org/x/text v0.3.6
+	golang.org/x/text v0.3.8
 )
 
 require (
