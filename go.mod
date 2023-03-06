@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/aymerick/douceur v0.2.0
 	github.com/fogleman/gg v1.3.0
-	golang.org/x/text v0.3.6
+	golang.org/x/text v0.7.0
 )
 
 require (
@@ -23,5 +23,5 @@ require (
 	github.com/sebdah/goldie/v2 v2.5.3
 	github.com/stretchr/testify v1.7.1
 	golang.org/x/exp v0.0.0-20220428152302-39d4317da171
-	golang.org/x/image v0.0.0-20220413100746-70e8d0d3baa9
+	golang.org/x/image v0.5.0
 )
